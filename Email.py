@@ -1,7 +1,12 @@
 import smtplib
 import sys
+import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger()
 
 def send_email(mailhost, username, password, from_addr, to_addrs, subject, body):
     # Create the email message
@@ -14,20 +19,25 @@ def send_email(mailhost, username, password, from_addr, to_addrs, subject, body)
     msg.attach(MIMEText(body, 'plain'))
 
     try:
+        logger.debug(f"Connecting to SMTP server: {mailhost}")
         # Establish connection with the SMTP server
         with smtplib.SMTP(mailhost) as server:
+            server.set_debuglevel(1)  # Enable debug mode (verbose communication with SMTP)
+            logger.debug("Starting TLS encryption")
             server.starttls()  # Upgrade the connection to secure (TLS)
+            logger.debug("Logging in to SMTP server")
             server.login(username, password)  # Login with username and password
+            logger.debug("Sending email")
             server.sendmail(from_addr, to_addrs, msg.as_string())  # Send email
 
-        print("Email sent successfully!")
+        logger.info("Email sent successfully!")
 
     except Exception as e:
-        print(f"Failed to send email: {e}")
+        logger.error(f"Failed to send email: {e}")
 
 def main():
     if len(sys.argv) < 6:
-        print("Usage: python send_email.py <mailhost:port> <username> <password> <from_addr> <to_addr> <subject> <body>")
+        logger.error("Usage: python send_email.py <mailhost:port> <username> <password> <from_addr> <to_addr> <subject> <body>")
         sys.exit(1)
 
     # Parse command-line arguments
